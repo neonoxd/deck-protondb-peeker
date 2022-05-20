@@ -3,5 +3,10 @@
     "author": "neonoxd",
     "main_view_html": "main_view.html",
     "tile_view_html": "",
-    "flags": ["_hot_reload", "_root"]
+    "flags": ["_hot_reload", "_root"],
+    "publish": {
+        "discord_id": "128227939912253450",
+        "description": "Displays data from ProtonDB in both Plugin view and Steam UI",
+        "tags": ["utility"]
+    }
 }
