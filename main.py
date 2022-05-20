@@ -218,10 +218,10 @@ class Plugin:
                             `
 
                             let pstuff = `
-                            <div id="proton-rating" class="rate_{tier}">
+                            <a href="https://www.protondb.com/app/{appId}" id="proton-rating" class="rate_{tier}">
                                 <img alt="ProtonDB Logo" style="float: left;" height="25" src="https://www.protondb.com/sites/protondb/images/site-logo.svg" width="23">
                                 <div class="pdb_rating">{tier}</div>
-                            </div>
+                            </a>
                             `
 
                             document.querySelector("[class^='appdetailsgameinfopanel_CompatLabel_']").outerHTML+=pstyle+pstuff;
