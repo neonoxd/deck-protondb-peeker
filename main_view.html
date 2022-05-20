@@ -1,0 +1,180 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="/steam_resource/css/2.css">
+        <link rel="stylesheet" href="/steam_resource/css/39.css">
+        <link rel="stylesheet" href="/steam_resource/css/library.css">
+        <script src="/static/library.js"></script>
+        <style>
+            .rate_platinum {
+                background-color: rgb(180, 199, 220);
+                color: black;
+            }
+            .rate_gold {
+                background-color: rgb(207, 181, 59);
+                color: black;
+            }
+            .rate_silver {
+                background-color: rgb(166, 166, 166);
+                color: black;
+            }
+            .rate_bronze {
+                background-color: rgb(205, 127, 50);
+                color: black;
+            }
+            .rate_borked {
+                background-color: red;
+                color: black;
+            }
+
+            .logo-holder {
+                -webkit-box-align: center;
+                align-items: center;
+                display: flex;
+                font-family: Rationale, sans-serif;
+                font-size: 42px;
+                font-weight: 600;
+                position: relative;
+                z-index: 1;
+            }
+
+            .logo-span-db {
+                color: rgb(207, 181, 59);
+            }
+
+            .hduhnA {
+                font-family: Abel, sans-serif;
+            }
+
+            .rating {
+                text-align: center;
+            }
+            
+        </style>
+    </head>
+    <body onload="init()">
+
+        <div height="40" class="logo-holder">
+            <img alt="ProtonDB Logo" height="40" src="https://www.protondb.com/sites/protondb/images/site-logo.svg" width="40">
+            <span>proton</span><span class="logo-span-db">db</span>
+        </div>
+        
+        <div class="quickaccesscontrols_PanelSectionRow_2VQ88">
+            <div class="gamepaddialog_Field_S-_La gamepaddialog_WithFirstRow_qFXi6 gamepaddialog_WithBottomSeparator_1lUZx gamepaddialog_ExtraPaddingOnChildrenBelow_5UO-_ gamepaddialog_StandardPadding_XRBFu gamepaddialog_HighlightOnFocus_wE4V6 Panel Focusable" style="--indent-level:0;">
+                <div class="gamepaddialog_FieldLabelRow_H9WOq">
+                    <div class="gamepaddialog_FieldLabel_3b0U-">
+                        Inject to Game Info Tab
+                    </div>
+                    <div class="gamepaddialog_FieldChildren_14_HB">
+                        <div id="injectToggle" tabindex="0" class="gamepaddialog_Toggle_24G4g Focusable" onclick="handleInjectToggle()">
+                            <div class="gamepaddialog_ToggleRail_2JtC3"></div>
+                            <div class="gamepaddialog_ToggleSwitch_3__OD"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <span class="gamename-holder hduhnA"></span>
+        <div id="container"></div>
+    </body>
+
+    <script>
+        let lastRenderedAppId = -1;
+        async function init() {
+
+            console.log("Checking Current Inject config...")
+            await loadCurrentInjectConfig();
+
+            console.log("Initializing plugin content view")
+            await refreshPlugin();
+            start_poll();
+        }
+
+        async function start_poll() {
+            while (true) {
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                await refreshPlugin();
+            }
+        }
+
+        async function refreshPlugin() {
+            let appId = await getAppId();
+            if (appId && appId !== lastRenderedAppId) {
+                console.log("new appId found, refreshing plugin view")
+                lastRenderedAppId = appId;
+                let gameName = await getGameName(appId);
+                let gameData = await getSummary(appId);
+                //let saltedId = await getSaltedAppId(appId);
+                renderPluginMenuExtraContent({"gameData": gameData, "gameName": gameName})
+            }
+        }
+
+        function renderPluginMenuExtraContent(data) {
+            const gameData = data["gameData"];
+            const gameName = data["gameName"];
+            if (gameName) document.getElementsByClassName("gamename-holder")[0].innerText=gameName;
+            document.getElementById("container").innerHTML=`
+            <div class="DialogHeader rating rate_${gameData["tier"]}">${gameData["tier"]}</div>
+            <div class="DialogBody">
+                Score: ${gameData["score"]}/10
+            </div>
+            `;
+            //const extraData = `<div class="DialogBody">
+            //    ${saltedId}
+            //</div>`
+        }
+
+        async function getAppId() {
+            let appId = await call_plugin_method("find_appid_on_sp");
+            console.log("got appid:",appId)
+            return appId;
+        }
+
+        async function getGameName(appId) {
+            console.log("getting game name")
+            let gameName = await call_plugin_method("get_game_name", {"appId": appId});
+            console.log(gameName)
+            return gameName;
+        }
+
+        async function getSummary(appId) {
+            let appSummary = await call_plugin_method("get_app_summary", {"appId": appId});
+            console.log("raw app summary", appSummary)
+            return JSON.parse(appSummary);
+        }
+
+        async function getSaltedAppId(appId) {
+            const saltedAppId = await call_plugin_method("getSaltedAppId", {"appId": appId});
+            console.log("salted app id", saltedAppId)
+            return saltedAppId;
+        }
+
+        function setSliderToggleState(id, state) {
+            const ENABLED_CLASS = "gamepaddialog_On_3ld7T";
+            let toggle = document.getElementById(id);
+
+            if (state && !toggle.classList.contains(ENABLED_CLASS)) {
+                toggle.classList.add(ENABLED_CLASS);
+            }
+
+            if (!state && toggle.classList.contains(ENABLED_CLASS)) {
+                toggle.classList.remove(ENABLED_CLASS);
+            }
+        }
+
+        function handleInjectToggle() {
+            let toggle = document.getElementById("injectToggle");
+            let isActive = toggle.classList.contains("gamepaddialog_On_3ld7T");
+            call_plugin_method("set_inject", {state: !isActive}).then((newState) => {
+                setSliderToggleState("injectToggle", newState);
+            })
+        }
+
+        async function loadCurrentInjectConfig() {
+            const state = await call_plugin_method("get_current_inject_config", {});
+            console.log("current inject state", state)
+            setSliderToggleState("injectToggle", state)
+        }
+
+    </script>
+</html>
