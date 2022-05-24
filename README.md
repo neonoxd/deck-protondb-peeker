@@ -10,6 +10,8 @@ Displays current ProtonDB Tier, and score of the selected game in the Plugin Vie
 
 Optionally can inject the ProtonDB Tier next to the Steam Deck Compatibility Icon under Game Info tab
 
+Clicking it will open the built in browser on the ProtonDB page of the currently viewed app
+
 I plan on expanding on the features, but not until the new version of the Plugin Loader is released.
 
 ![demo](./res/gamedetailsview.png)
